@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <title>World Time</title>
+    <style>
+        #data-container {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: space-between;
+        }
+        
+        .country-card {
+            width: 200px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            padding: 10px;
+            margin-bottom: 10px;
+        }
+    </style>
+</head>
+
+<body>
+    <div id="data-container"></div>
+
+    <script>
+        async function fetchData() {
+            try {
+                const response = await fetch('http://worldtimeapi.org/api/timezone');
+                const timezones = await response.json();
+
+                const countryPromises = timezones.map(async(timezone) => {
+                    const country = timezone.split('/')[1];
+                    const response = await fetch(`http://worldtimeapi.org/api/timezone/${timezone}`);
+                    const data = await response.json();
+                    const {
+                        datetime
+                    } = data;
+
+                    return {
+                        country,
+                        datetime
+                    };
+                });
+
+                const countries = await Promise.all(countryPromises);
+                return countries;
+            } catch (error) {
+                console.error('Error:', error);
+                throw error;
+            }
+        }
+
+        function displayData(data) {
+            const container = document.getElementById('data-container');
+
+            data.forEach((countryData) => {
+                const {
+                    country,
+                    datetime
+                } = countryData;
+
+                const countryCard = document.createElement('div');
+                countryCard.className = 'country-card';
+
+                const countryName = document.createElement('h3');
+                countryName.textContent = country;
+
+                const dateTime = document.createElement('p');
+                dateTime.textContent = datetime;
+
+                countryCard.appendChild(countryName);
+                countryCard.appendChild(dateTime);
+
+                container.appendChild(countryCard);
+            });
+        }
+
+        window.addEventListener('load', async() => {
+            try {
+                const data = await fetchData();
+                displayData(data);
+            } catch (error) {
+                console.error('Error:', error);
+                // Handle error
+            }
+        });
+    </script>
+</body>
+
+</html>
